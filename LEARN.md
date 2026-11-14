@@ -8,6 +8,7 @@
 | `@LEARN.md <SLUG>` | Resume that course at its next step (after every `/clear`, in every mode). |
 | `@LEARN.md extend <SLUG> <addition>` | Add topics to a finished course (see Extend course). |
 | `@LEARN.md refresh <SLUG>` | Re-check a finished course against a newer VERSION (see Refresh course). |
+| `@LEARN.md audit <SLUG> [topic slugs] [accuracy\|clarity]` | Re-review finished topics without rewriting them (see Audit course). |
 
 - `LANG` = the language named in the message. If none is named, ask once, then proceed.
 - `SLUG` = lowercase kebab-case of LANG, with symbols spelled out (`C#` → `csharp`, `C++` → `cpp`, `Node.js` → `nodejs`).
@@ -64,6 +65,7 @@ After every planning step, **stop and wait for the user's response**. Do not con
 - **Every subagent prompt starts with** `LEDGER: <phase> | <task>` (e.g. `LEDGER: Phase 3 content | 01-variables-types`). The token report labels agents from this line, so `agents.tsv` is not needed.
 - Max 4 subagents running at once (count every running agent).
 - **Phases 3 and 5 run as one Workflow** (see Phase 3). Use the Agent tool only as a fallback.
+- **Every review, audit or re-review of more than 2 topics runs through the Workflow** (`author: []`), never as Agent calls from the main session. Each agent report lands in the main context and is re-read on every later call.
 
 ---
 
@@ -258,6 +260,18 @@ Adds topics (e.g. a framework like FastAPI) to a finished course. It uses the sa
 
 ---
 
+## Audit course (`@LEARN.md audit <SLUG> [topic slugs] [accuracy|clarity]`)
+
+Re-reviews finished topics. No new topics, no plans, no author agents. One session.
+
+1. Record the session id.
+2. Run the Workflow with `topics` = the named slugs (default: all), `author: []`, and `reviewers` if the user named one. The script reviews, fixes and re-verifies as in Phase 3 + 5.
+3. Then the link check, the `Verified` column update and Finish, as in Phase 3 + 5.
+
+Never launch the reviewers by hand from the main session, and never read topic data into it.
+
+---
+
 ## Refresh course (`@LEARN.md refresh <SLUG>`)
 
 Re-checks a finished course against a newer VERSION. No new topics, no plans, no author agents.
@@ -301,6 +315,7 @@ The orchestrator may edit this file, `.claude/agents/learn-*.md` and `tools/*` w
 - 2026-11-12 — (user request) Superpowers kept only as 5 project skills in `.claude/skills/` (verification-before-completion, systematic-debugging, dispatching-parallel-agents, writing-skills, diagnosing-superpowers). Plugin stays off: plugin skills can't be toggled one by one, and brainstorming/plans/TDD/worktree/review skills clash with LEARN.md's flow.
 - 2026-11-12 — (user request) Extend course section + `extend <SLUG>` invocation: append topics to a finished course (new rows only, gates re-opened, `_taught.md` rebuilt if missing, manifest append, Workflow on new slugs); >25 topics allowed when extending.
 - 2026-11-12 — Extend Session B: libraries first needed by a plan (python-uv: pydantic-settings, pwdlib, PyJWT) are version-verified and appended to VERSION before Gate 2.
+- 2026-11-14 — (user request, token review of python-uv) Web fetching measured at 1.7% of weighted tokens: no MCP/skill added for docs. New `audit <SLUG>` invocation + Model routing rule: reviews of >2 topics run through the Workflow (`author: []`), never hand-launched from the main session (a hand-run audit took 136 main-session calls, context to 388K, 35M cache reads; the Workflow run took 14 calls, ≤90K). `learn-fixer`: all Greps in one message, all Edits in one message.
 - 2026-11-12 — `tools/token-usage.mjs`: LEDGER searched across leading user messages, not only the first (Workflow harness prepends a relay message; all 31 python-uv extend agents showed as Unlabelled).
 - 2026-11-14 — (user request, kit review) `tools/course-pipeline.js`: review fails closed (topic passes only if its reviewer returns its exact slug with pass=true; missing verdict or dead agent → issue); optional `reviewers` arg. `tools/*.mjs`: `fileURLToPath` (kit path with a space broke both tools).
 - 2026-11-14 — (user request) VERSION = newest LTS (latest stable only when the project has no LTS). Phase 1 step 0 writes `plans/_version-notes.md` from the official release notes; planner, authors and accuracy reviewers read it. Extend: drift check (pin or upgrade) + `check-topic.mjs --set-version`; whole-course check flags mixed versions. New `refresh <SLUG>` mode (accuracy-only re-verify). Resume is always `@LEARN.md <SLUG>`.
