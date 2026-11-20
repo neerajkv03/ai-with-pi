@@ -5,7 +5,7 @@ export const meta = {
   phases: [
     { title: 'Author', detail: 'learn-author (sonnet), one per topic' },
     { title: 'Review', detail: 'learn-accuracy (sonnet, ≤3 topics) + learn-clarity (haiku, ≤6 topics)' },
-    { title: 'Fix', detail: 'learn-fixer (sonnet), one per failing topic' },
+    { title: 'Fix', detail: 'learn-fixer, one per failing topic (haiku if clarity-only issues, else sonnet)' },
     { title: 'Re-verify', detail: 'only the reported issues, max 2 rounds' },
   ],
 }
@@ -91,7 +91,9 @@ await pipeline(
     for (const t of group) { const all = [...(pre[t] || []), ...first[t]]; if (all.length) open[t] = all; else result[t] = { status: 'done' } }
     for (let round = 1; round <= 2 && Object.keys(open).length; round++) {
       const failing = Object.keys(open)
-      const fixes = await parallel(failing.map((t) => () => run('learn-fixer', 'sonnet', 'Phase 5 fix', `${t} r${round}`, `Topic=${t}\nIssues:\n- ${open[t].join('\n- ')}`, FIX)))
+      // Clarity-only issues carry exact replacement text → Haiku; any ACC/CHK issue needs Sonnet's hand-tracing.
+      const fixModel = (t) => open[t].every((x) => x.startsWith('CLR')) ? 'haiku' : 'sonnet'
+      const fixes = await parallel(failing.map((t) => () => run('learn-fixer', fixModel(t),'Phase 5 fix', `${t} r${round}`, `Topic=${t}\nIssues:\n- ${open[t].join('\n- ')}`, FIX)))
       failing.forEach((t, i) => { const s = fixes[i]?.skipped || []; if (s.length) log(`${t} r${round} skipped: ${s.join(' | ')}`) })
       const again = await review(failing, open)
       const next = {}
