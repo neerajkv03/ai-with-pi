@@ -9,7 +9,7 @@ Portable kit: `LEARN.md`, `DESIGN.md`, `CLAUDE.md`, `.claude/`, `tools/`. Copy i
 - Claude Code setup stays project-level (`.claude/`, this file). Never edit global `~/.claude` config.
 - Self-improvement: you may edit `LEARN.md`, `.claude/agents/learn-*.md` and `tools/*` from session lessons without asking. Log each change in LEARN.md's Changelog and report it.
 - Subagents launched by LEARN.md use `.claude/agents/learn-*.md`; their rules live there, not in prompts.
-- `.claude/skills/` holds 5 skills copied from superpowers 7.0.0 (MIT): verification-before-completion, systematic-debugging, dispatching-parallel-agents, writing-skills (use it when editing agent files), diagnosing-superpowers. The plugin itself stays off here, because its other skills (brainstorming, writing-plans…) clash with LEARN.md's gates and phases.
+- `.claude/skills/` holds 2 skills copied from superpowers 7.0.0 (MIT): verification-before-completion, writing-skills (trimmed to `SKILL.md` + `testing-skills-with-subagents.md`; use it when editing agent files). The plugin itself stays off here, because its other skills (brainstorming, writing-plans…) clash with LEARN.md's gates and phases.
 - `.claude/skills/` also holds grill-me + grilling from mattpocock/skills (MIT, `LICENSE-mattpocock.txt`). `/grill-me` starts a relentless interview to stress-test a plan. In LEARN.md it is opt-in: `@LEARN.md <language> grill`, or `/grill-me` at Gate 1.
 - Tools (Node, no deps):
   - `tools/check-topic.mjs`: validate course data.

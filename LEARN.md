@@ -69,7 +69,7 @@ After every planning step, **stop and wait for the user's response**. Do not con
 
 ---
 
-## Optional skills (use if installed)
+## Optional skills (caveman + ponytail declared in `.claude/settings.json`; use if installed)
 
 - **caveman**: orchestrator chat and progress updates. **Never** in learner-facing text: global rule 2 wins. Gate summaries stay terse but list every topic, sub-topic and goal in full. Subagent reports are already terse by agent definition.
 - **grilling** (in `.claude/skills/`; the user's `/grill-me` runs the same skill): only when the user asks for it, by the word `grill` in the invocation or `/grill-me` at a gate. Never start it unasked.
@@ -321,3 +321,5 @@ The orchestrator may edit this file, `.claude/agents/learn-*.md` and `tools/*` w
 - 2026-11-14 — (user request) VERSION = newest LTS (latest stable only when the project has no LTS). Phase 1 step 0 writes `plans/_version-notes.md` from the official release notes; planner, authors and accuracy reviewers read it. Extend: drift check (pin or upgrade) + `check-topic.mjs --set-version`; whole-course check flags mixed versions. New `refresh <SLUG>` mode (accuracy-only re-verify). Resume is always `@LEARN.md <SLUG>`.
 - 2026-11-14 — (user request) Optional grilling skill: opt-in by `grill` in the invocation or `/grill-me` at Gate 1; result in `plans/_brief.md`. `programming_language/` removed (empty placeholder; Phase 0 tree is the reference). `.claude/settings.json`: allow rules for the two `node tools/...` commands.
 - 2026-11-14 — (user request) Project `.claude/settings.json` also disables the claude.ai-synced plugins (`figma`, `codesign`, `design`, `design-skills`, `cowork-plugin-management`, `ux-agent-skills` as `<name>@synced`); CLAUDE.md limits skill use to `.claude/skills/` + caveman + ponytail.
+- 2026-11-20 — (user request, skills review) Removed project skills systematic-debugging, dispatching-parallel-agents (clashed with Workflow-only reviews) and diagnosing-superpowers (plugin off; `token-usage.mjs` covers cost); none had ever run. writing-skills trimmed to `SKILL.md` + `testing-skills-with-subagents.md`; dangling `superpowers:test-driven-development` and deleted-file references removed.
+- 2026-11-20 — (user request) Project `.claude/settings.json` now declares caveman + ponytail (`enabledPlugins` + `extraKnownMarketplaces`), so a fresh copy of the kit prompts to install them. The 2026-11-11 "subagents get the rule as one prompt line" is superseded: agent files carry their own terse/minimal rules.
