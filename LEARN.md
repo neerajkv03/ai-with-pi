@@ -4,7 +4,7 @@
 
 | Message | Does |
 |---|---|
-| `@LEARN.md <language>` (e.g. `@LEARN.md python`) | Start a course. Add the word `grill` (`@LEARN.md python grill`) to be interviewed first (see Optional skills). |
+| `@LEARN.md <language>` (e.g. `@LEARN.md python`) | Start a course. Asks 5–10 intake questions first (see Phase 0.5). Add the word `grill` (`@LEARN.md python grill`) to be interviewed first (see Optional skills). |
 | `@LEARN.md <SLUG>` | Resume that course at its next step (after every `/clear`, in every mode). |
 | `@LEARN.md extend <SLUG> <addition>` | Add topics to a finished course (see Extend course). |
 | `@LEARN.md refresh <SLUG>` | Re-check a finished course against a newer VERSION (see Refresh course). |
@@ -27,7 +27,7 @@ Context grows with every turn, and every call re-reads it. So each phase group r
 
 | Session | Work | Ends with |
 |---|---|---|
-| A | Phase 0 + 1 | Gate 1 |
+| A | Phase 0 + 0.5 + 1 | Gate 1 |
 | B | Phase 2 | Gate 2 |
 | C | Phase 3 + 4 + 5 + Finish | Finish report |
 
@@ -73,9 +73,9 @@ After every planning step, **stop and wait for the user's response**. Do not con
 
 - **caveman**: orchestrator chat and progress updates. **Never** in learner-facing text: global rule 2 wins. Gate summaries stay terse but list every topic, sub-topic and goal in full. Subagent reports are already terse by agent definition.
 - **grilling** (in `.claude/skills/`; the user's `/grill-me` runs the same skill): only when the user asks for it, by the word `grill` in the invocation or `/grill-me` at a gate. Never start it unasked.
-  - Where: Session A, before the topic list (new course) or before the new rows (extend). At Gate 1 it may challenge the list instead.
+  - Where: Session A, after the intake (Phase 0.5), before the topic list (new course) or before the new rows (extend). It digs deeper than the intake; it does not repeat its questions. At Gate 1 it may challenge the list instead.
   - What to settle: audience, goal, toolchain, OS, depth, what to leave out.
-  - Result: ≤15 terse lines of decisions in `SLUG/plans/_brief.md`. Phases 1 and 2 read it if it exists. Subagents never read it; the plans carry it.
+  - Result: ≤15 more terse lines of decisions appended to `SLUG/plans/_brief.md`. Phases 1 and 2 read it. Subagents never read it; the plans carry it.
   - Its questions stay full prose (no caveman). Its fact-finding subagents count toward the max of 4. Afterwards, continue to the gate as usual.
 - **ponytail**: code in `tools/`. Never cuts a DESIGN.md checklist item, `textContent` safety, or try/catch on storage. Content code examples stay minimal but must still fully show the concept (this rule is in `learn-author`).
 - Neither skill overrides approval gates, model routing or accuracy rules.
@@ -104,10 +104,22 @@ After every planning step, **stop and wait for the user's response**. Do not con
 SLUG/
 ├── TOPIC_SUBTOPIC_LIST.md
 ├── TOKEN_USAGE.md          (written at Finish)
-├── plans/                  (+ _taught.md, _version-notes.md, sessions.txt; _brief.md if grilled)
+├── plans/                  (+ _brief.md, _taught.md, _version-notes.md, sessions.txt)
 └── output/                 (Phase 4: copied from tools/app-template/)
     └── data/
 ```
+
+---
+
+## Phase 0.5 — Intake (mandatory, new course) → `SLUG/plans/_brief.md`
+
+Skip if `plans/_brief.md` exists (resume). Otherwise ask **5–10 questions specific to LANG** before any research, using the AskUserQuestion tool (≤4 per call, so 2–3 calls). Each question offers 2–4 concrete options, the recommended one first and marked `(Recommended)`.
+
+- Cover, adapted to LANG: goal/use case (e.g. web backend, data, CLI, systems, mobile), toolchain and package/build manager (e.g. uv vs pip, Maven vs Gradle), frameworks or libraries to include or leave out, LANG-specific style choices (e.g. type hints, async, modules system, error-handling style), OS/editor, course depth and size, testing and deployment focus.
+- Ask only what changes the topic list or plans. Never ask about what fixed rules settle: the zero-knowledge learner (global rule 2), VERSION = newest LTS, JSON content, DESIGN.md.
+- Questions stay full prose (no caveman).
+- Write the answers as ≤15 terse decision lines to `plans/_brief.md`. A toolchain answer extends LANG/VERSION (e.g. "python with uv"). Phases 1 and 2 read the brief; subagents never do (the plans carry it).
+- Then continue to Phase 1 (or grilling, if asked) without stopping.
 
 ---
 
@@ -116,6 +128,7 @@ SLUG/
 0. **Verify VERSION.** Use one Haiku subagent to search and fetch the official LANG release page (e.g. python.org/downloads, nodejs.org, go.dev/dl). Use the newest LTS release, or the latest stable release if the project has no LTS (no betas, RCs or non-LTS "current" lines). Record the version, date checked and source URL in the header. If the lookup fails, tell the user and ask them to confirm VERSION before continuing.
    - **Version notes.** The same subagent also fetches the official "What's new" / release-notes page for VERSION and writes `SLUG/plans/_version-notes.md`: ≤40 terse lines per tool (new syntax and APIs, changed defaults, removals, deprecations), each with its source URL, taken only from the fetched page. Planning (Phase 2), authors and accuracy reviewers read it; it wins over model memory.
 
+- Read `plans/_brief.md` first; the topic list follows its decisions.
 - 15–25 topics, 3–8 sub-topics each (an Extend run may go past 25).
 - Ordered by dependency: each topic needs only earlier topics.
 - Slug format: `NN-kebab-title` (e.g. `01-variables-types`).
@@ -240,7 +253,8 @@ Adds topics (e.g. a framework like FastAPI) to a finished course. It uses the sa
 
 1. **Session A (Phase 1, new rows only):**
    - Record the session id.
-   - If the invocation says `grill`, run the grilling skill on the addition first (see Optional skills).
+   - Intake (Phase 0.5) for the addition: 3–5 questions, answers appended to `_brief.md` under `## <addition>`.
+   - If the invocation says `grill`, run the grilling skill on the addition next (see Optional skills).
    - Verify each new tool's version (Phase 1 step 0, version notes included: append to `_version-notes.md`) and append it to VERSION and the `Version checked:` line.
    - **Drift check:** re-verify the course's existing VERSION too. If a newer LTS/stable exists, show old → new at Gate 1 and ask: **pin** (default: new topics target the course's VERSION) or **upgrade** (stop; the user runs `refresh` first, then `extend`).
    - Append the new rows, numbered after the last topic, with status `todo | todo | todo`. Use 3–8 sub-topics each, ordered by dependency on the existing topics.
@@ -325,3 +339,4 @@ The orchestrator may edit this file, `.claude/agents/learn-*.md` and `tools/*` w
 - 2026-11-20 — (user request) Project `.claude/settings.json` now declares caveman + ponytail (`enabledPlugins` + `extraKnownMarketplaces`), so a fresh copy of the kit prompts to install them. The 2026-11-11 "subagents get the rule as one prompt line" is superseded: agent files carry their own terse/minimal rules.
 - 2026-11-20 — (user request, token optimisation; golang run: subagents $14.80, main $0.84) Clarity re-verify uses Grep + targeted Read (whole-file re-reads cost 53K cache write vs 10K for accuracy re-verify). `course-pipeline.js`: clarity-only fix jobs (64% of fix jobs) run `learn-fixer` on Haiku; any `ACC`/`CHK` issue keeps Sonnet. (`effort: low` on `learn-clarity` tried and reverted: clarity flags 33/34 topics, quality first.) Also added the `karpathy-guidelines` project skill (multica-ai/andrej-karpathy-skills, MIT).
 - 2026-11-20 — (user request, content quality; golang + gin review data) Accuracy review flagged 11/34 topics, mostly confident claims about tool behaviour (vet/staticcheck checks, Gin internals) and wrong tool output (vet message, race report lines, `go test -v`), while reviewers fetched docs once in 9 agents. `learn-author` self-check: tool/framework behaviour claims only from plan/version notes/cited source; CLI output only certain lines. `learn-accuracy`: must WebFetch official docs for such claims and every tool-output example; unresolved → remove.
+- 2026-11-20 — (user request) Mandatory Phase 0.5 intake: 5–10 LANG-specific questions (AskUserQuestion, recommended option first) before VERSION research; answers → `plans/_brief.md` (always written now). Extend asks 3–5 on the addition. Grilling stays opt-in and appends to the brief.

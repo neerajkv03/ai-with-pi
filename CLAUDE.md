@@ -2,7 +2,7 @@
 
 Portable kit: `LEARN.md`, `DESIGN.md`, `CLAUDE.md`, `.claude/`, `tools/`. Copy it into a fresh folder to start new courses.
 
-- `@LEARN.md <language>` runs the course generator; `@LEARN.md <SLUG>` resumes; `extend <SLUG> <addition>` adds topics; `refresh <SLUG>` re-checks against a newer version; `audit <SLUG>` re-reviews finished topics. VERSION is always the newest LTS (latest stable if no LTS exists). LEARN.md is the process; follow it exactly. Each phase group runs in its own session (`/clear` between gates).
+- `@LEARN.md <language>` runs the course generator (asks 5–10 intake questions first); `@LEARN.md <SLUG>` resumes; `extend <SLUG> <addition>` adds topics; `refresh <SLUG>` re-checks against a newer version; `audit <SLUG>` re-reviews finished topics. VERSION is always the newest LTS (latest stable if no LTS exists). LEARN.md is the process; follow it exactly. Each phase group runs in its own session (`/clear` between gates).
 - After any plan (LEARN.md gates, task plans, design proposals): stop and wait for the user's explicit approval before implementing.
 - `DESIGN.md` is the user's portable design spec: propose edits, apply only on approval.
 - Skills allowed here: the ones in `.claude/skills/`, plus caveman and ponytail. Never invoke any other plugin skill or plugin MCP tool (figma, codesign, design, design-skills, cowork…) in this project, even if it is listed. `.claude/settings.json` turns those plugins off; a new unrelated plugin gets added there as `"<name>@<marketplace>": false` (`@synced` for claude.ai-synced ones).
