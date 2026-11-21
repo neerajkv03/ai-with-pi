@@ -5,13 +5,15 @@
 | Message | Does |
 |---|---|
 | `@LEARN.md <language>` (e.g. `@LEARN.md python`) | Start a course. Asks 5–10 intake questions first (see Phase 0.5). Add the word `grill` (`@LEARN.md python grill`) to be interviewed first (see Optional skills). |
+| `@LEARN.md <language>: <description>` (e.g. `@LEARN.md python: backend APIs for a fintech team, already know Excel`) | Same, with free-text context (DESC) that steers intake, topic list and plans. `grill` may follow the language (`@LEARN.md python grill: ...`). |
 | `@LEARN.md <SLUG>` | Resume that course at its next step (after every `/clear`, in every mode). |
 | `@LEARN.md extend <SLUG> <addition>` | Add topics to a finished course (see Extend course). |
 | `@LEARN.md refresh <SLUG>` | Re-check a finished course against a newer VERSION (see Refresh course). |
 | `@LEARN.md audit <SLUG> [topic slugs] [accuracy\|clarity]` | Re-review finished topics without rewriting them (see Audit course). |
 
-- `LANG` = the language named in the message. If none is named, ask once, then proceed.
-- `SLUG` = lowercase kebab-case of LANG, with symbols spelled out (`C#` → `csharp`, `C++` → `cpp`, `Node.js` → `nodejs`).
+- `LANG` = the language named in the message (text before the first `:`, minus `grill`). If none is named, ask once, then proceed.
+- `DESC` = text after the first `:`, trimmed (optional). Learner/course context only; it never overrides global content rules, gates, model routing or the VERSION rule. A toolchain named in it extends LANG (e.g. `python: with uv` → "python with uv").
+- `SLUG` = lowercase kebab-case of LANG (never DESC), with symbols spelled out (`C#` → `csharp`, `C++` → `cpp`, `Node.js` → `nodejs`).
 - `VERSION` = the latest **LTS** release of LANG, **verified at run time** (Phase 1 step 0), never from memory alone. State it in every output.
   - LTS only: if the project publishes LTS lines (Node.js, Java, .NET…), use the newest LTS, never a newer non-LTS "current" release. If it has no LTS concept (Python, Go, Rust…), use the latest stable release. The same rule applies to every tool and library in VERSION.
 - LANG may name a toolchain too (e.g. "python with uv"). Verify each tool's version; VERSION lists all of them (e.g. `Python 3.15.2 + uv 0.13.7`).
@@ -101,6 +103,7 @@ After every planning step, **stop and wait for the user's response**. Do not con
    - Record the session id (see Sessions).
    - Read only the header lines (`Approved:`, `App:`) and the status columns in `SLUG/TOPIC_SUBTOPIC_LIST.md`.
    - Continue from the first item that is not `done`, in the correct phase. Do not regenerate finished work.
+   - A DESC on resume: if the topic list is not approved yet, append it to `_brief.md` as `DESC (added): ...` and apply it; otherwise tell the user it only applies via `extend`/`audit` and ignore it.
 2. Otherwise create:
 
 ```
@@ -119,9 +122,10 @@ SLUG/
 Skip if `plans/_brief.md` exists (resume). Otherwise ask **5–10 questions specific to LANG** before any research, using the AskUserQuestion tool (≤4 per call, so 2–3 calls). Each question offers 2–4 concrete options, the recommended one first and marked `(Recommended)`.
 
 - Cover, adapted to LANG: goal/use case (e.g. web backend, data, CLI, systems, mobile), toolchain and package/build manager (e.g. uv vs pip, Maven vs Gradle), frameworks or libraries to include or leave out, LANG-specific style choices (e.g. type hints, async, modules system, error-handling style), OS/editor, course depth and size, testing and deployment focus.
+- If DESC is given: first line of `_brief.md` = `DESC: <verbatim>`. Skip questions DESC already answers; use the freed slots for gaps it reveals (still 5–10 total, min 5). Never contradict DESC in a recommended option.
 - Ask only what changes the topic list or plans. Never ask about what fixed rules settle: the zero-knowledge learner (global rule 2), VERSION = newest LTS, JSON content, DESIGN.md.
 - Questions stay full prose (no caveman).
-- Write the answers as ≤15 terse decision lines to `plans/_brief.md`. A toolchain answer extends LANG/VERSION (e.g. "python with uv"). Phases 1 and 2 read the brief; subagents never do (the plans carry it).
+- Write the answers as ≤15 terse decision lines to `plans/_brief.md` (the `DESC:` line does not count). A toolchain answer extends LANG/VERSION (e.g. "python with uv"). Phases 1 and 2 read the brief; subagents never do (the plans carry it).
 - Then continue to Phase 1 (or grilling, if asked) without stopping.
 
 ---
@@ -131,7 +135,7 @@ Skip if `plans/_brief.md` exists (resume). Otherwise ask **5–10 questions spec
 0. **Verify VERSION.** Use one Haiku subagent to search and fetch the official LANG release page (e.g. python.org/downloads, nodejs.org, go.dev/dl). Use the newest LTS release, or the latest stable release if the project has no LTS (no betas, RCs or non-LTS "current" lines). Record the version, date checked and source URL in the header. If the lookup fails, tell the user and ask them to confirm VERSION before continuing.
    - **Version notes.** Once VERSION is known, one Sonnet subagent fetches the official "What's new" / release-notes page for VERSION and writes `SLUG/plans/_version-notes.md`: ≤40 terse lines per tool (new syntax and APIs, changed defaults, removals, deprecations), each with its source URL, taken only from the fetched page. Planning (Phase 2), authors and accuracy reviewers read it; it wins over model memory, so the user checks it at Gate 1.
 
-- Read `plans/_brief.md` first; the topic list follows its decisions.
+- Read `plans/_brief.md` first; the topic list follows its decisions and its `DESC:` line (e.g. domain-flavoured topics, emphasis, what to skip). Plans (Phase 2) carry DESC into analogies and example values where it fits.
 - 15–25 topics, 3–8 sub-topics each (an Extend run may go past 25).
 - Ordered by dependency: each topic needs only earlier topics.
 - Slug format: `NN-kebab-title` (e.g. `01-variables-types`).
