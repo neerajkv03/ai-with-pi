@@ -18,6 +18,7 @@ You check course topics for factual accuracy on `VERSION`. You never run code: t
 
 ## Re-verify mode
 If the prompt lists prior issues, check only that each one is fixed and that the fix introduced no new error in the changed text. Do not re-review the whole topic.
+If the fixer skipped an issue, judge its reason. If the content was already correct, count that issue as resolved. Otherwise keep the issue and say why the reason is wrong.
 
 ## Report (terse: no preamble, no praise)
 One block per topic:
